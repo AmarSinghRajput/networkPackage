@@ -13,11 +13,11 @@ public class Network {
     
     public static let shared = Network()
     private init() {}
-    public var excludedEndpointsProvider: (() -> [APIEndPoint])?
+    public var excludedEndpointsProvider: (() -> [any APIEndPointProtocol])?
     
     // MARK: - POST Method with JSON request body
     
-    public func post<T: Decodable, E: Encodable>(endpoint: APIEndPoint, body: E, isMock: Bool = false, completion: @escaping (Result<T, APIError>) -> Void) {
+    public func post<T: Decodable, E: Encodable>(endpoint: any APIEndPointProtocol, body: E, isMock: Bool = false, completion: @escaping (Result<T, APIError>) -> Void) {
         // Create the URL for the request
         guard let url = URL(string: "\(isMock ? endpoint.mock_endpoint : endpoint.endpoint)") else {
             completion(.failure(.invalidURL))
@@ -72,10 +72,16 @@ public class Network {
                         completion(.failure(.decodingFailed(error)))
                     }else {
                         //perform nested mock API or JSON reading on dev only
-                        if let excludedEndpoints = self.excludedEndpointsProvider?(), excludedEndpoints.contains(endpoint) {
-                            // Handle the excluded endpoints here
-                            self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
-                            return
+                        if let excludedEndpointsProvider = self.excludedEndpointsProvider {
+                            let excludedEndpoints = excludedEndpointsProvider()
+                            let containsExcludedEndpoint = excludedEndpoints.contains { excludedEndpoint in
+                                return excludedEndpoint.endpoint == endpoint.endpoint && excludedEndpoint.mock_endpoint == endpoint.mock_endpoint
+                            }
+                            if containsExcludedEndpoint {
+                                // Handle the excluded endpoints here
+                                self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
+                                return
+                            }
                         }
                         completion(.failure(.httpError(statusCode: httpResponse.statusCode)))
                     }
@@ -86,10 +92,16 @@ public class Network {
                     completion(.failure(.httpError(statusCode: httpResponse.statusCode)))
                 }else {
                     // perform nested mock API or JSON reading on dev only
-                    if let excludedEndpoints = self.excludedEndpointsProvider?(), excludedEndpoints.contains(endpoint) {
-                        // Handle the excluded endpoints here
-                        self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
-                        return
+                    if let excludedEndpointsProvider = self.excludedEndpointsProvider {
+                        let excludedEndpoints = excludedEndpointsProvider()
+                        let containsExcludedEndpoint = excludedEndpoints.contains { excludedEndpoint in
+                            return excludedEndpoint.endpoint == endpoint.endpoint && excludedEndpoint.mock_endpoint == endpoint.mock_endpoint
+                        }
+                        if containsExcludedEndpoint {
+                            // Handle the excluded endpoints here
+                            self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
+                            return
+                        }
                     }
                     completion(.failure(.httpError(statusCode: httpResponse.statusCode)))
                 }
@@ -105,7 +117,7 @@ extension Network {
     //  if API fails call mock API
     // if mock fails read form JSON stored locally containing API mock responses
     
-    func handleMockAPICase<T: Decodable, E: Encodable>(endpoint: APIEndPoint, body: E, isMock: Bool = false, completion: @escaping (Result<T, APIError>) -> Void) {
+    func handleMockAPICase<T: Decodable, E: Encodable>(endpoint: any APIEndPointProtocol, body: E, isMock: Bool = false, completion: @escaping (Result<T, APIError>) -> Void) {
         //if isMock == true here it means Mock API has also failed and now we have to pick from JSON file
         if isMock{
             //reading from JSON here
