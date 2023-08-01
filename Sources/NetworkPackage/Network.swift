@@ -86,6 +86,9 @@ public class Network {
                                 self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
                                 return
                             }
+                        }else {
+                            self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
+                            return
                         }
                     }
                 }
@@ -106,6 +109,9 @@ public class Network {
                             self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
                             return
                         }
+                    }else {
+                        self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
+                        return
                     }
                 }
             }
