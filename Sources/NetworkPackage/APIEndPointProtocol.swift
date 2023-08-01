@@ -9,5 +9,6 @@ import Foundation
 
 public protocol APIEndPointProtocol: Equatable {
     var endpoint: String { get }
-    var mock_endpoint: String { get }
+    var mock_endpoint: String? { get }
+    var mock_json: String? { get }
 }

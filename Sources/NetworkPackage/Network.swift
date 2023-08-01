@@ -19,7 +19,7 @@ public class Network {
     
     public func post<T: Decodable, E: Encodable>(endpoint: any APIEndPointProtocol, body: E, isMock: Bool = false, completion: @escaping (Result<T, APIError>) -> Void) {
         // Create the URL for the request
-        guard let url = URL(string: "\(isMock ? endpoint.mock_endpoint : endpoint.endpoint)") else {
+        guard let url = URL(string: "\(String(describing: isMock ? endpoint.mock_endpoint : endpoint.endpoint))") else {
             completion(.failure(.invalidURL))
             return
         }
@@ -68,7 +68,7 @@ public class Network {
                     let responseObject = try decoder.decode(T.self, from: data)
                     completion(.success(responseObject))
                 } catch {
-                    if selectedEnvironment == .production {
+                    if selectedEnvironment == .production || selectedEnvironment == .staging {
                         completion(.failure(.decodingFailed(error)))
                     }else {
                         //perform nested mock API or JSON reading on dev only
@@ -88,7 +88,7 @@ public class Network {
                 }
             default:
                 // There was an error with the API on production, return the error
-                if selectedEnvironment == .production {
+                if selectedEnvironment == .production || selectedEnvironment == .staging {
                     completion(.failure(.httpError(statusCode: httpResponse.statusCode)))
                 }else {
                     // perform nested mock API or JSON reading on dev only
@@ -121,7 +121,8 @@ extension Network {
         //if isMock == true here it means Mock API has also failed and now we have to pick from JSON file
         if isMock{
             //reading from JSON here
-            if let mockModel = JSONReader.fetchMockAPIResponse(fileName: endpoint.endpoint.description, responseType: T.self) {
+            guard let jsonName = endpoint.mock_json else { return }
+            if let mockModel = JSONReader.fetchMockAPIResponse(fileName: jsonName, responseType: T.self) {
                 completion(.success(mockModel))
             }else {
                 //reading from JSON failed
