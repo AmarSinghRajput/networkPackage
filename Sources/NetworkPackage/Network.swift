@@ -19,7 +19,10 @@ public class Network {
     
     public func post<T: Decodable, E: Encodable>(endpoint: any APIEndPointProtocol, body: E, isMock: Bool = false, completion: @escaping (Result<T, APIError>) -> Void) {
         // Create the URL for the request
-        guard let url = URL(string: "\(String(describing: isMock ? endpoint.mock_endpoint : endpoint.endpoint))") else {
+        if isMock {
+            guard (endpoint.mock_endpoint != nil) else {return}
+        }
+        guard let url = URL(string: "\(isMock ? endpoint.mock_endpoint! : endpoint.endpoint)") else {
             completion(.failure(.invalidURL))
             return
         }
