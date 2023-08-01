@@ -75,7 +75,7 @@ public class Network {
                         if let excludedEndpointsProvider = self.excludedEndpointsProvider {
                             let excludedEndpoints = excludedEndpointsProvider()
                             let containsExcludedEndpoint = excludedEndpoints.contains { excludedEndpoint in
-                                return excludedEndpoint.endpoint == endpoint.endpoint && excludedEndpoint.mock_endpoint == endpoint.mock_endpoint
+                                return excludedEndpoint.endpoint == endpoint.endpoint
                             }
                             if containsExcludedEndpoint {
                                 // Handle the excluded endpoints here
