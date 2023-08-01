@@ -78,12 +78,12 @@ public class Network {
                                 return excludedEndpoint.endpoint == endpoint.endpoint
                             }
                             if containsExcludedEndpoint {
-                                // Handle the excluded endpoints here
+                                completion(.failure(.httpError(statusCode: httpResponse.statusCode)))
+                            }else{
                                 self.handleMockAPICase(endpoint: endpoint, body: body, isMock: isMock, completion: completion)
                                 return
                             }
-                        }
-                        completion(.failure(.httpError(statusCode: httpResponse.statusCode)))
+                        }                        
                     }
                 }
             default:
